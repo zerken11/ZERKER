@@ -25,16 +25,32 @@ jobs:
             StrictHostKeyChecking no
           EOF
 
-      - name: Deploy to VPS
+      - name: Deploy projects
         run: |
-          ssh vps <<'EOF'
-          cd /srv/myapp || mkdir -p /srv/myapp && cd /srv/myapp
+          ssh vps << 'EOF'
+          # === sms-activate ===
+          cd /home/client_28482_4/scripts/sms-activate
           if [ -d .git ]; then
             git pull origin main
           else
-            git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git .
+            git clone https://github.com/zerken11/ZERKER.git .
           fi
           npm ci --production || npm install --production
-          pm2 restart myapp || pm2 start server.js --name myapp
+
+          # === tech-god-bug ===
+          cd /home/client_28482_4/TECH-GOD-BUG-BOT
+          if [ -d .git ]; then
+            git pull origin main
+          else
+            git clone https://github.com/zerken11/ZERKER.git .
+          fi
+          npm ci --production || npm install --production
+
+          # === root-index ===
+          cd /home/client_28482_4
+          [ -f package.json ] && (npm ci --production || npm install --production)
+
+          # Restart all apps via PM2 ecosystem
+          pm2 start /home/client_28482_4/ecosystem.config.js
           pm2 save
           EOF
