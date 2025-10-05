@@ -3,13 +3,17 @@ name: Codex Fixer
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:        # allow manual run
+  schedule:
+    - cron: "0 2 * * *"     # run daily at 2 AM UTC
 
 jobs:
   fix:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -46,9 +50,9 @@ jobs:
           git add .
           git commit -m "Codex auto-fixes: lint/format/deps" || echo "No changes"
           git push origin main || true
+
       - name: Create version tag
         run: |
-          # Count existing tags that match codex-v*
           count=$(git tag -l "codex-v*" | wc -l)
           new=$((count + 1))
           tag="codex-v$new"
@@ -58,6 +62,7 @@ jobs:
 
           git tag $tag
           git push origin $tag
+
       - name: Write version to file
         run: |
           latest_tag=$(git describe --tags `git rev-list --tags --max-count=1`)
@@ -69,4 +74,3 @@ jobs:
           git add VERSION.txt
           git commit -m "Codex update: set version $latest_tag" || echo "No changes"
           git push origin main || true
-
