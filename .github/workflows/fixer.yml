@@ -3,9 +3,9 @@ name: Codex Fixer
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:        # allow manual run
+  workflow_dispatch:
   schedule:
-    - cron: "0 2 * * *"     # run daily at 2 AM UTC
+    - cron: "0 2 * * *"
 
 jobs:
   fix:
@@ -15,7 +15,7 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # needed so git tags are available
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -26,10 +26,10 @@ jobs:
         run: npm install
 
       - name: Lint code with ESLint
-        run: npx eslint . || true    # non-blocking
+        run: npx eslint . || true
 
       - name: Format code with Prettier
-        run: npx prettier --write . || true   # non-blocking
+        run: npx prettier --write . || true
 
       - name: Create version tag and update VERSION.txt
         run: |
@@ -38,11 +38,15 @@ jobs:
           tag="codex-v$new"
 
           echo "$tag" > VERSION.txt
+
           git config user.name "github-actions"
           git config user.email "actions@github.com"
 
           git add VERSION.txt
           git commit -m "Update VERSION.txt to $tag" || echo "No changes"
           git tag "$tag"
+
+      - name: Push changes back to GitHub
+        run: |
           git push origin main --tags
 
