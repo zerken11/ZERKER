@@ -57,6 +57,15 @@ jobs:
           count=$(git tag -l "codex-v*" | wc -l)
           new=$((count + 1))
           tag="codex-v$new"
+            - name: Write VERSION.txt
+        run: |
+          echo "codex-v$new" > VERSION.txt
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add VERSION.txt
+          git commit -m "Update VERSION.txt to codex-v$new" || echo "No changes"
+          git push origin main || true
+
 
           git config --global user.email "codex-bot@users.noreply.github.com"
           git config --global user.name "Codex Fixer Bot"
