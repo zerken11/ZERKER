@@ -1,0 +1,36 @@
+# Node modules
+node_modules/
+
+# Build outputs
+dist/
+build/
+.cache/
+.next/
+out/
+
+# Logs
+*.log
+logs/
+
+# Environment / config
+.env
+*.env
+
+# PM2
+.pm2/
+dump.pm2
+
+# Git
+.git/
+.gitignore
+
+# Generated
+coverage/
+uploads/
+
+# Skip files that are not valid JS
+sms-activate/index.js
+*.html
+*.json
+*.md
+
