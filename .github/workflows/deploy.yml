@@ -1,17 +1,15 @@
-name: Deploy to VPS
+name: Monorepo Deploy
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Configure SSH
         run: |
@@ -25,32 +23,18 @@ jobs:
             StrictHostKeyChecking no
           EOF
 
-      - name: Deploy projects
+      - name: Deploy monorepo
         run: |
           ssh vps << 'EOF'
-          # === sms-activate ===
-          cd /home/client_28482_4/scripts/sms-activate
-          if [ -d .git ]; then
-            git pull origin main
-          else
-            git clone https://github.com/zerken11/ZERKER.git .
-          fi
-          npm ci --production || npm install --production
+          cd /home/client_28482_4/ZERKER || git clone https://github.com/zerken11/ZERKER.git /home/client_28482_4/ZERKER
+          cd /home/client_28482_4/ZERKER && git pull origin main
 
-          # === tech-god-bug ===
-          cd /home/client_28482_4/TECH-GOD-BUG-BOT
-          if [ -d .git ]; then
-            git pull origin main
-          else
-            git clone https://github.com/zerken11/ZERKER.git .
-          fi
-          npm ci --production || npm install --production
+          # Install dependencies for each project
+          cd sms-activate && [ -f package.json ] && (npm ci --production || npm install --production)
+          cd ../tech-god-bug && [ -f package.json ] && (npm ci --production || npm install --production)
+          cd ../root-index && [ -f package.json ] && (npm ci --production || npm install --production)
 
-          # === root-index ===
-          cd /home/client_28482_4
-          [ -f package.json ] && (npm ci --production || npm install --production)
-
-          # Restart all apps via PM2 ecosystem
-          pm2 start /home/client_28482_4/ecosystem.config.js
+          # Restart all with PM2
+          pm2 start /home/client_28482_4/ZERKER/ecosystem.config.js
           pm2 save
           EOF
