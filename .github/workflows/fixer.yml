@@ -74,3 +74,4 @@ jobs:
           git add VERSION.txt
           git commit -m "Codex update: set version $latest_tag" || echo "No changes"
           git push origin main || true
+
