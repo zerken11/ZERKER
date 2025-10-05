@@ -27,7 +27,13 @@ jobs:
           script: |
             cd /home/client_28482_4/ZERKER
             git pull
-            npm install --omit=dev
+            for dir in sms-activate tech-god-bug root-index; do
+              if [ -f "$dir/package.json" ]; then
+                cd "$dir"
+                npm install --omit=dev
+                cd - >/dev/null
+              fi
+            done
             pm2 save
             pm2 restart ecosystem.config.js
 
