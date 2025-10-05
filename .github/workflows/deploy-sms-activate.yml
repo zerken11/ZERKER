@@ -21,10 +21,5 @@ jobs:
 
       - name: Deploy sms-activate
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_IP }} << 'EOF'
-          cd /srv/app/repo/sms-activate || exit 1
-          git pull origin main
-          pm2 stop sms-activate || true
-          npm install --omit=dev
-          pm2 restart sms-activate || pm2 start index.js --name sms-activate
-          EOF
+          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_IP }} \
+          "bash -c 'bash -s' < <(curl -fsSL https://raw.githubusercontent.com/zerken11/ZERKER/main/.scripts/deploy_unified.sh) sms-activate fakew.cyou"

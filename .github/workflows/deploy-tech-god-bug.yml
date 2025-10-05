@@ -21,10 +21,5 @@ jobs:
 
       - name: Deploy tech-god-bug
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_IP }} << 'EOF'
-          cd /srv/app/repo/tech-god-bug || exit 1
-          git pull origin main
-          pm2 stop tech-bot || true
-          npm install
-          pm2 restart tech-bot || pm2 start index.js --name tech-bot
-          EOF
+          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_IP }} \
+          "bash -c 'bash -s' < <(curl -fsSL https://raw.githubusercontent.com/zerken11/ZERKER/main/.scripts/deploy_unified.sh) tech-god-bug tech.fakew.cyou"

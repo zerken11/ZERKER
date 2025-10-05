@@ -21,10 +21,5 @@ jobs:
 
       - name: Deploy root-index
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_IP }} << 'EOF'
-          cd /srv/app/repo/root-index || exit 1
-          git pull origin main
-          pm2 stop root-index || true
-          npm install
-          pm2 restart root-index || pm2 start index.js --name root-index
-          EOF
+          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_IP }} \
+          "bash -c 'bash -s' < <(curl -fsSL https://raw.githubusercontent.com/zerken11/ZERKER/main/.scripts/deploy_unified.sh) root-index root.fakew.cyou"
