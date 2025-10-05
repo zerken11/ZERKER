@@ -2,45 +2,29 @@ name: Deploy root-index
 
 on:
   push:
+    branches: [main]
     paths:
-      - "root-index/**"
-      - ".github/workflows/deploy-root-index.yml"
-    branches: [ main ]
-  workflow_dispatch:
+      - 'root-index/**'
+      - '.github/workflows/deploy-root-index.yml'
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
         with:
-          node-version: "18"
+          ssh-private-key: ${{ secrets.SSH_KEY }}
 
-      - name: SSH into VPS and deploy root-index
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_KEY }}
-          script: |
-            set -euo pipefail
-
-            cd /home/client_28482_4/ZERKER
-            git pull --ff-only
-
-            cd root-index
-            npm ci --omit=dev
-
-            if pm2 describe root-index >/dev/null; then
-              pm2 reload /home/client_28482_4/ZERKER/ecosystem.config.js --only root-index
-            else
-              pm2 start /home/client_28482_4/ZERKER/ecosystem.config.js --only root-index
-            fi
-
-            pm2 save
-
+      - name: Deploy root-index
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_IP }} << 'EOF'
+          cd /srv/app/repo/root-index || exit 1
+          git pull origin main
+          pm2 stop root-index || true
+          npm install
+          pm2 restart root-index || pm2 start server.js --name root-index
+          EOF
