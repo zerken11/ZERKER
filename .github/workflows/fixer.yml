@@ -27,8 +27,8 @@ jobs:
         run: npx eslint "**/*.{js,ts}" || true
 
       - name: Format code with Prettier
-        run: |
-    npx prettier --write "**/*.{js,ts,json,yml,yaml,md}" || true
+  run: |
+    npx prettier --write "**/*.{js,ts,json,yml,yaml,md}" || echo "Prettier failed, continuing..."
 
       - name: Fix vulnerabilities
         run: npm audit fix || true
