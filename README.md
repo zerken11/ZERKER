@@ -2,3 +2,4 @@
 INT
 test trigger
 trigger version file
+codex test run
