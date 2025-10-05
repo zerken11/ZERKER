@@ -30,9 +30,9 @@ jobs:
           cd /home/client_28482_4/ZERKER && git pull origin main
 
           # Install dependencies for each project
-          cd sms-activate && [ -f package.json ] && (npm ci --production || npm install --production)
-          cd ../tech-god-bug && [ -f package.json ] && (npm ci --production || npm install --production)
-          cd ../root-index && [ -f package.json ] && (npm ci --production || npm install --production)
+          cd sms-activate && [ -f package.json ] && (npm install --production)
+          cd ../tech-god-bug && [ -f package.json ] && (npm install --production)
+          cd ../root-index && [ -f package.json ] && (npm install --production)
 
           # Restart all with PM2
           pm2 start /home/client_28482_4/ZERKER/ecosystem.config.js
