@@ -46,4 +46,16 @@ jobs:
           git add .
           git commit -m "Codex auto-fixes: lint/format/deps" || echo "No changes"
           git push origin main || true
+      - name: Create version tag
+        run: |
+          # Count existing tags that match codex-v*
+          count=$(git tag -l "codex-v*" | wc -l)
+          new=$((count + 1))
+          tag="codex-v$new"
+
+          git config --global user.email "codex-bot@users.noreply.github.com"
+          git config --global user.name "Codex Fixer Bot"
+
+          git tag $tag
+          git push origin $tag
 
