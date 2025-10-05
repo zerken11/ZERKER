@@ -8,6 +8,10 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+# Local databases
+sms-activate/backend/data/*.db
+sms-activate/backend/data/*.db-journal
+
 # Environment files
 .env
 .env.local
@@ -32,6 +36,7 @@ coverage/
 
 # Build outputs
 dist/
+**/dist/
 build/
 .cache/
 .next/

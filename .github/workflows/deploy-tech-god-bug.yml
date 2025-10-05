@@ -2,34 +2,24 @@ name: Deploy tech-god-bug
 
 on:
   push:
+    branches: [main]
     paths:
-      - "tech-god-bug/**"
-      - ".github/workflows/deploy-tech-god-bug.yml"
-    branches: [ main ]
-  workflow_dispatch:
+      - 'tech-god-bug/**'
+      - '.github/workflows/deploy-tech-god-bug.yml'
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
         with:
-          node-version: "18"
+          ssh-private-key: ${{ secrets.SSH_KEY }}
 
-      - name: SSH into VPS and deploy tech-god-bug
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_KEY }}
-          script: |
-            cd /home/client_28482_4/ZERKER/tech-god-bug
-            git pull
-            npm install --omit=dev
-            pm2 restart tech-god-bug || pm2 start main.js --name tech-god-bug
-
+      - name: Deploy tech-god-bug
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_IP }} \
+          "bash -c 'bash -s' < <(curl -fsSL https://raw.githubusercontent.com/zerken11/ZERKER/main/.scripts/deploy_unified.sh) tech-god-bug tech.fakew.cyou"

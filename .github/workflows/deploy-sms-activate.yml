@@ -2,34 +2,24 @@ name: Deploy sms-activate
 
 on:
   push:
+    branches: [main]
     paths:
-      - "sms-activate/**"
-      - ".github/workflows/deploy-sms-activate.yml"
-    branches: [ main ]
-  workflow_dispatch:
+      - 'sms-activate/**'
+      - '.github/workflows/deploy-sms-activate.yml'
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
         with:
-          node-version: "18"
+          ssh-private-key: ${{ secrets.SSH_KEY }}
 
-      - name: SSH into VPS and deploy sms-activate
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_KEY }}
-          script: |
-            cd /home/client_28482_4/ZERKER/sms-activate
-            git pull
-            npm install --omit=dev
-            pm2 restart sms-activate || pm2 start index.js --name sms-activate
-
+      - name: Deploy sms-activate
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_IP }} \
+          "bash -c 'bash -s' < <(curl -fsSL https://raw.githubusercontent.com/zerken11/ZERKER/main/.scripts/deploy_unified.sh) sms-activate fakew.cyou"
