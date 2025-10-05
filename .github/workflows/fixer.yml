@@ -24,11 +24,11 @@ jobs:
         run: npm install --ignore-scripts
 
       - name: Run ESLint
-        run: npx eslint "**/*.{js,ts}" || true
+        run: npx eslint "**/*.{js,ts}"
 
       - name: Format code with Prettier
-  run: |
-    npx prettier --write "**/*.{js,ts,json,yml,yaml,md}" || echo "Prettier failed, continuing..."
+      run: npx prettier --write "**/*.{js,ts,json,yml,yaml,md}"
+
 
       - name: Fix vulnerabilities
         run: npm audit fix || true
