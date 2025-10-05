@@ -21,5 +21,11 @@ jobs:
 
       - name: Deploy tech-god-bug
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_IP }} \
-          "bash -c 'bash -s' < <(curl -fsSL https://raw.githubusercontent.com/zerken11/ZERKER/main/.scripts/deploy_unified.sh) tech-god-bug tech.fakew.cyou"
+          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_IP }} <<'EOF'
+          set -euo pipefail
+          cd /srv/app/repo
+          git pull origin main
+          cd tech-god-bug
+          npm ci --omit=dev
+          pm2 restart tech-god-bug || pm2 start main.js --name tech-god-bug
+          EOF

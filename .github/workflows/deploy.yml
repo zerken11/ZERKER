@@ -27,8 +27,8 @@ jobs:
           script: |
             set -euo pipefail
 
-            cd /home/client_28482_4/ZERKER
-            git pull --ff-only
+            cd /srv/app/repo
+            git pull origin main
 
             for dir in sms-activate tech-god-bug root-index; do
               if [ -f "$dir/package.json" ]; then
