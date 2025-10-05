@@ -1,5 +1,57 @@
+git add .gitignore
+git commit -m "Add Node.js monorepo .gitignore"
+git push origin main
+# Node.js dependencies
 node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment files
 .env
+.env.local
+.env.*.local
+
+# Logs
+logs
+*.log
+*.log.*
+lerna-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage / testing
+coverage/
+.nyc_output/
+*.lcov
+
+# Build outputs
+dist/
+build/
+.cache/
+.next/
+out/
+
+# System files
 .DS_Store
-npm-debug.log
+Thumbs.db
+*.swp
+*.swo
+
+# IDE / Editor junk
+.vscode/
+.idea/
+*.iml
+
+# PM2 state
+.pm2/
+dump.pm2
+
+# Optional: ignore uploads or generated files
+uploads/
 
