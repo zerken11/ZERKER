@@ -1,1 +1,49 @@
+name: Codex Fixer
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install deps
+        run: npm install --ignore-scripts
+
+      - name: Run ESLint
+        run: npx eslint . --ext .js,.ts || true
+
+      - name: Format code with Prettier
+        run: npx prettier --write .
+
+      - name: Fix vulnerabilities
+        run: npm audit fix || true
+
+      - name: Regenerate lockfiles if needed
+        run: |
+          for dir in sms-activate tech-god-bug root-index; do
+            if [ -f "$dir/package.json" ]; then
+              cd $dir
+              rm -f package-lock.json
+              npm install --package-lock-only
+              cd ..
+            fi
+          done
+
+      - name: Commit fixes back
+        run: |
+          git config --global user.email "codex-bot@users.noreply.github.com"
+          git config --global user.name "Codex Fixer Bot"
+          git add .
+          git commit -m "Codex auto-fixes: lint/format/deps" || echo "No changes"
+          git push origin main || true
 
