@@ -1,0 +1,40 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          cat <<EOF >> ~/.ssh/config
+          Host vps
+            HostName ${{ secrets.VPS_HOST }}
+            User ${{ secrets.VPS_USER }}
+            StrictHostKeyChecking no
+          EOF
+
+      - name: Deploy to VPS
+        run: |
+          ssh vps <<'EOF'
+          cd /srv/myapp || mkdir -p /srv/myapp && cd /srv/myapp
+          if [ -d .git ]; then
+            git pull origin main
+          else
+            git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git .
+          fi
+          npm ci --production || npm install --production
+          pm2 restart myapp || pm2 start server.js --name myapp
+          pm2 save
+          EOF
