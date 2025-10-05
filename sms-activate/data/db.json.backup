@@ -1,0 +1,61 @@
+{
+  "users": {
+    "123456789": {
+      "balance": 0,
+      "createdAt": "2025-10-01T07:01:02.484Z",
+      "id": "123456789",
+      "first_name": "Test",
+      "username": "testbot"
+    },
+    "725797724": {
+      "balance": 0,
+      "createdAt": "2025-10-01T07:39:51.998Z",
+      "id": "725797724",
+      "username": "WH0lSNEXT",
+      "first_name": "️️️🆔",
+      "last_name": null
+    },
+    "local_b9bb1bdff483197e": {
+      "balance": 0,
+      "createdAt": "2025-10-01T07:01:02.271Z",
+      "id": "local_b9bb1bdff483197e",
+      "username_local": "testuser_1759302062122",
+      "passHash": "$2b$10$c/VqdKSEagqqnkDxRO0yseIkrvWnvWzQpC2.nqopi9CFpdtQ2bvaG",
+      "first_name": "testuser_1759302062122"
+    },
+    "local_5628daf42d5fb71b": {
+      "balance": 0,
+      "createdAt": "2025-10-01T07:01:02.374Z",
+      "id": "local_5628daf42d5fb71b",
+      "username_local": "testuser_1759302061287",
+      "passHash": "$2b$10$q6BF3DC66sTdS8gbc83H2uRTl9nvbtcO/ZRrjHmbBcttS2bMqX5d.",
+      "first_name": "testuser_1759302061287"
+    },
+    "local_a16fa3be317ecc48": {
+      "balance": 0,
+      "createdAt": "2025-10-01T07:22:05.490Z",
+      "id": "local_a16fa3be317ecc48",
+      "username_local": "zxzx",
+      "passHash": "$2b$10$G5jJYCSxUrubRK5grr7eu.Wh7XTVyLCiV/6rFj3Nl2gjQfA8AgqRG",
+      "first_name": "zxzx"
+    }
+  },
+  "activations": {},
+  "tokens": {
+    "fe7870c9-0582-4bd8-a070-43cb84314f72": {
+      "uid": 725797724,
+      "createdAt": 1759304392003,
+      "expiresAt": 1759909192003
+    },
+    "53113a0f-7139-47a3-ae84-e1f5760407de": {
+      "uid": 725797724,
+      "createdAt": 1759304616517,
+      "expiresAt": 1759909416517
+    },
+    "f0e64176-3bfd-4da4-96a8-006866546ef7": {
+      "uid": 725797724,
+      "createdAt": 1759304632091,
+      "expiresAt": 1759909432091
+    }
+  }
+}

@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>SMS-Activate Dashboard</title>
+  <link rel="stylesheet" href="/style.css"/>
+  <script async src="https://telegram.org/js/telegram-widget.js?22"></script>
+</head>
+<body>
+  <div id="auth-screen" style="display:none">
+    <div class="auth-container">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <h1>Welcome to SMS-Activate</h1>
+        <div id="auth-lang-toggle" style="display:flex;gap:5px">
+          <button class="lang-btn" data-lang="ar" title="Arabic">🇪🇬 AR</button>
+          <button class="lang-btn" data-lang="en" title="English">🇬🇧 EN</button>
+        </div>
+      </div>
+      <div class="auth-tabs">
+        <button class="tab active" data-tab="telegram">Telegram Login</button>
+        <button class="tab" data-tab="login">Username/Password</button>
+        <button class="tab" data-tab="signup">Sign Up</button>
+      </div>
+
+      <div id="telegram-tab" class="auth-tab active">
+        <h3>Sign in with Telegram</h3>
+        <div id="telegram-login"></div>
+      </div>
+
+      <div id="login-tab" class="auth-tab">
+        <h3>Sign in with Username</h3>
+        <form id="login-form">
+          <input type="text" id="login-username" placeholder="Username" required/>
+          <input type="password" id="login-password" placeholder="Password" required/>
+          <button type="submit">Login</button>
+          <div id="login-error" class="error"></div>
+        </form>
+      </div>
+
+      <div id="signup-tab" class="auth-tab">
+        <h3>Create Account</h3>
+        <form id="signup-form">
+          <input type="text" id="signup-username" placeholder="Username" required/>
+          <input type="password" id="signup-password" placeholder="Password (min 6 chars)" required/>
+          <button type="submit">Sign Up</button>
+          <div id="signup-error" class="error"></div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="app-screen">
+    <header>
+      <h1>SMS-Activate Dashboard</h1>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div id="user-info">...</div>
+        <div id="lang-toggle" style="display:flex;gap:5px">
+          <button class="lang-btn" data-lang="ar" title="Arabic">🇪🇬 AR</button>
+          <button class="lang-btn" data-lang="en" title="English">🇬🇧 EN</button>
+        </div>
+        <button id="logout-btn">Logout</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="card">
+        <h2>1) Country & Service</h2>
+        <div class="row">
+          <label><input type="radio" name="country" value="EG" checked> Egypt 🇪🇬</label>
+          <label><input type="radio" name="country" value="CA"> Canada 🇨🇦</label>
+        </div>
+        <div class="row">
+          <div>Service: <b>WhatsApp</b></div>
+          <div id="pricebox">Price: … | Available: …</div>
+          <button id="refresh">Refresh Price</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>2) Buy Number</h2>
+        <button id="buy">Buy WhatsApp Number</button>
+        <div id="buy-msg" class="muted"></div>
+      </section>
+
+      <section class="card">
+        <h2>3) Activations</h2>
+        <div id="acts"></div>
+      </section>
+    </main>
+
+    <footer>
+      <small>Codes also arrive in Telegram. Keep this tab open while waiting.</small>
+    </footer>
+  </div>
+
+  <script>
+    window.BOT_USERNAME = 'Fake_WA_bot';
+  </script>
+  <script src="/app.js"></script>
+</body>
+</html>

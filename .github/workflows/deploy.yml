@@ -38,3 +38,4 @@ jobs:
           pm2 start /home/client_28482_4/ZERKER/ecosystem.config.js
           pm2 save
           EOF
+
