@@ -2,39 +2,32 @@ name: Monorepo Deploy
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Configure SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.VPS_KEY }}" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          cat <<EOF >> ~/.ssh/config
-          Host vps
-            HostName ${{ secrets.VPS_HOST }}
-            User ${{ secrets.VPS_USER }}
-            StrictHostKeyChecking no
-          EOF
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
 
-      - name: Deploy monorepo
-        run: |
-          ssh vps << 'EOF'
-          cd /home/client_28482_4/ZERKER || git clone https://github.com/zerken11/ZERKER.git /home/client_28482_4/ZERKER
-          cd /home/client_28482_4/ZERKER && git pull origin main
+      - name: SSH into VPS and deploy
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_KEY }}
+          script: |
+            cd /home/client_28482_4/ZERKER
+            git pull
+            npm install --omit=dev
+            pm2 save
+            pm2 restart ecosystem.config.js
 
-          # Install dependencies for each project
-          cd sms-activate && [ -f package.json ] && (npm install --production)
-          cd ../tech-god-bug && [ -f package.json ] && (npm install --production)
-          cd ../root-index && [ -f package.json ] && (npm install --production)
-
-          # Restart all with PM2
-          pm2 start /home/client_28482_4/ZERKER/ecosystem.config.js
-          pm2 save
-          EOF
