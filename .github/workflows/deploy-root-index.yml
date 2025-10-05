@@ -1,0 +1,35 @@
+name: Deploy root-index
+
+on:
+  push:
+    paths:
+      - "root-index/**"
+      - ".github/workflows/deploy-root-index.yml"
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: SSH into VPS and deploy root-index
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_KEY }}
+          script: |
+            cd /home/client_28482_4/ZERKER/root-index
+            git pull
+            npm install --omit=dev
+            pm2 restart root-index || pm2 start index.js --name root-index
+
