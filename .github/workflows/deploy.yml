@@ -25,9 +25,32 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_KEY }}
           script: |
+            set -euo pipefail
+
             cd /home/client_28482_4/ZERKER
-            git pull
-            npm install --omit=dev
+            git pull --ff-only
+
+            for dir in sms-activate tech-god-bug root-index; do
+              if [ -f "$dir/package.json" ]; then
+                (
+                  cd "$dir"
+                  npm ci --omit=dev
+                )
+              fi
+            done
+
+            if pm2 describe root-index >/dev/null; then
+              pm2 reload ecosystem.config.js --only root-index
+            fi
+
+            if pm2 describe sms-activate >/dev/null; then
+              pm2 reload ecosystem.config.js --only sms-activate
+            fi
+
+            if pm2 describe tech-god-bug >/dev/null; then
+              pm2 reload ecosystem.config.js --only tech-god-bug
+            fi
+
+            pm2 start ecosystem.config.js
             pm2 save
-            pm2 restart ecosystem.config.js
 

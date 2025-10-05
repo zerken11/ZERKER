@@ -28,8 +28,19 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_KEY }}
           script: |
-            cd /home/client_28482_4/ZERKER/sms-activate
-            git pull
-            npm install --omit=dev
-            pm2 restart sms-activate || pm2 start index.js --name sms-activate
+            set -euo pipefail
+
+            cd /home/client_28482_4/ZERKER
+            git pull --ff-only
+
+            cd sms-activate
+            npm ci --omit=dev
+
+            if pm2 describe sms-activate >/dev/null; then
+              pm2 reload /home/client_28482_4/ZERKER/ecosystem.config.js --only sms-activate
+            else
+              pm2 start /home/client_28482_4/ZERKER/ecosystem.config.js --only sms-activate
+            fi
+
+            pm2 save
 

@@ -28,8 +28,19 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_KEY }}
           script: |
-            cd /home/client_28482_4/ZERKER/tech-god-bug
-            git pull
-            npm install --omit=dev
-            pm2 restart tech-god-bug || pm2 start main.js --name tech-god-bug
+            set -euo pipefail
+
+            cd /home/client_28482_4/ZERKER
+            git pull --ff-only
+
+            cd tech-god-bug
+            npm ci --omit=dev
+
+            if pm2 describe tech-god-bug >/dev/null; then
+              pm2 reload /home/client_28482_4/ZERKER/ecosystem.config.js --only tech-god-bug
+            else
+              pm2 start /home/client_28482_4/ZERKER/ecosystem.config.js --only tech-god-bug
+            fi
+
+            pm2 save
 

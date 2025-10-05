@@ -28,8 +28,19 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_KEY }}
           script: |
-            cd /home/client_28482_4/ZERKER/root-index
-            git pull
-            npm install --omit=dev
-            pm2 restart root-index || pm2 start index.js --name root-index
+            set -euo pipefail
+
+            cd /home/client_28482_4/ZERKER
+            git pull --ff-only
+
+            cd root-index
+            npm ci --omit=dev
+
+            if pm2 describe root-index >/dev/null; then
+              pm2 reload /home/client_28482_4/ZERKER/ecosystem.config.js --only root-index
+            else
+              pm2 start /home/client_28482_4/ZERKER/ecosystem.config.js --only root-index
+            fi
+
+            pm2 save
 
