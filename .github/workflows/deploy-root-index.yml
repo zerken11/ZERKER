@@ -26,5 +26,5 @@ jobs:
           git pull origin main
           pm2 stop root-index || true
           npm install
-          pm2 restart root-index || pm2 start server.js --name root-index
+          pm2 restart root-index || pm2 start index.js --name root-index
           EOF
