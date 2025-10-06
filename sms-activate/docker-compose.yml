@@ -1,10 +1,12 @@
-version: "3.8"
 services:
-  myapp:
+  sms-v2:
     build: .
-    container_name: myapp
-    restart: unless-stopped
+    container_name: sms-v2
     ports:
       - "3000:3000"
-    env_file:
-      - .env
+    volumes:
+      - ./backend/data:/app/data
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+

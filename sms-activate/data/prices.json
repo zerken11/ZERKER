@@ -1,8 +1,0 @@
-{
-  "service": "whatsapp",
-  "currency": "USD",
-  "items": [
-    { "country": "EG", "amount": 0.16, "active": true },
-    { "country": "CA", "amount": 0.2, "active": true }
-  ]
-}
