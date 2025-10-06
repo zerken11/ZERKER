@@ -1,0 +1,19 @@
+body {
+  margin: 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: radial-gradient(circle at top, #020202, #000000 80%);
+  height: 100vh;
+}
+
+input,
+button {
+  padding: 10px 14px;
+  border-radius: 4px;
+  border: 1px solid #00ff00;
+  background: rgba(0, 0, 0, 0.6);
+  color: #00ff00;
+}
+
+button {
+  cursor: pointer;
+}
