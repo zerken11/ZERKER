@@ -18,33 +18,32 @@ export default function Dashboard() {
         return;
       }
 
-      try {
-        const res = await fetch("/api/verify", {
-          headers: { Authorization: "Bearer " + token },
-        });
-        const data = await res.json();
+      const res = await fetch("/api/verify", {
+        headers: { Authorization: "Bearer " + token },
+      });
+      const data = await res.json();
 
-        if (!data.valid) {
-          alert("Session expired, please login again.");
-          logout();
-        } else {
-          setUser(data.user);
-        }
-      } catch (err) {
-        console.error(err);
-        logout();
+      if (!data.valid) {
+        localStorage.removeItem("token");
+        navigate("/");
+      } else {
+        // server returns { valid: true, user: { username, role, banned } }
+        setUser(data.user);
       }
     }
 
     checkAuth();
     const interval = setInterval(checkAuth, 10000); // recheck every 10s
     return () => clearInterval(interval);
-  }, []);
+  }, [navigate]);
 
   return (
     <div style={{ color: "lime", textAlign: "center", marginTop: "20vh" }}>
       <h1>HackerAI Matrix Dashboard</h1>
-      {user && <p>Logged in as: {user}</p>}
+      {user && <p>Logged in as: {user.username}</p>}
+      {user && user.role === "admin" && (
+        <p><a href="/admin">Go to Admin Console</a></p>
+      )}
       <button onClick={logout} style={{ marginTop: "20px" }}>
         Logout
       </button>
