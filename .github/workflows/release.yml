@@ -1,0 +1,38 @@
+name: Release
+
+on:
+  workflow_dispatch: # only runs when manually triggered
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Install deps
+        run: npm install
+
+      - name: Setup Git
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+
+      - name: Bump version and tag
+        run: |
+          count=$(git tag -l "codex-v*" | wc -l)
+          new=$((count + 1))
+          tag="codex-v$new"
+
+          echo "$tag" > VERSION.txt
+
+          git add VERSION.txt
+          git commit -m "Update VERSION.txt to $tag" || echo "No changes"
+          git tag -f "$tag"
+          git push origin "$tag"
