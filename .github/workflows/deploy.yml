@@ -1,33 +1,56 @@
-name: Monorepo Deploy
+name: Deploy to Server
 
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Setup Node.js
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "18"
+          node-version: 18
 
-      - name: SSH into VPS and deploy
-        uses: appleboy/ssh-action@v1.0.0
+      - name: Install backend deps (optional)
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Copy files to server (scp)
+        uses: appleboy/scp-action@v0.1.3
         with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_KEY }}
-          script: |
-            cd /home/client_28482_4/ZERKER
-            git pull
-            npm install --omit=dev
-            pm2 save
-            pm2 restart ecosystem.config.js
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          source: |
+            server.js
+            package.json
+            package-lock.json
+            frontend/dist/**
+          target: ${{ secrets.REMOTE_DIR }}
 
+      - name: Remote deploy commands (npm install + pm2 restart)
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            set -e
+            cd ${{ secrets.REMOTE_DIR }}
+            npm ci --production || true
+            pm2 restart ${{ secrets.PM2_PROCESS }} || pm2 start server.js --name ${{ secrets.PM2_PROCESS }}
+            pm2 save
