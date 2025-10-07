@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>MSDash — Matrix PRO</title>
+<style>
+  :root{
+    --bg:#000;
+    --accent:#00ff41;
+    --muted:#0b3b0b;
+    --panel:#041204;
+    --text:#a8ffa8;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;}
+  body{background:linear-gradient(0deg,#001200 0%, #000 100%); color:var(--text); overflow:hidden;}
+  /* matrix rain background */
+  canvas#rain{position:fixed;left:0;top:0;width:100%;height:100%;z-index:0;mix-blend-mode:screen;opacity:0.9;}
+  .app{position:relative;z-index:2;display:flex;height:100vh;gap:24px;padding:32px;}
+  .card{background:rgba(0,0,0,0.55);border:1px solid rgba(0,255,65,0.08);padding:20px;border-radius:8px;backdrop-filter: blur(4px);box-shadow: 0 6px 30px rgba(0,0,0,0.6);}
+  .left{flex:1;min-width:320px}
+  .right{width:420px}
+  h1{font-weight:700;margin:0 0 10px;color:var(--accent)}
+  small{color:#8fdc8f}
+  input,button,select{padding:10px;border-radius:6px;border:1px solid rgba(0,255,65,0.06);background:rgba(0,0,0,0.6);color:var(--text);width:100%;margin-top:8px}
+  button.primary{background:var(--accent);color:#000;border:none;font-weight:700;cursor:pointer}
+  .muted{color:#6fbf6f}
+  nav{display:flex;gap:8px;margin-bottom:12px}
+  table{width:100%;border-collapse:collapse;color:var(--text)}
+  th,td{padding:8px;border-bottom:1px dashed rgba(0,255,65,0.04);font-size:13px;text-align:left}
+  .small{font-size:12px;color:#86d686}
+  .admin-actions button{margin-right:8px}
+  .hidden{display:none}
+  .top-right{position:fixed;right:18px;top:14px;z-index:10}
+</style>
+</head>
+<body>
+<canvas id="rain"></canvas>
+
+<div class="top-right">
+  <button id="toggleTheme">Toggle Light</button>
+</div>
+
+<div class="app">
+  <div class="left card">
+    <h1>📱 MSDash — Matrix PRO</h1>
+    <div id="notlogged">
+      <p class="muted">Welcome — please login or sign up</p>
+      <div style="display:flex;gap:12px">
+        <div style="flex:1">
+          <h4>Login</h4>
+          <input id="login_user" placeholder="username" />
+          <input id="login_pass" placeholder="password" type="password" />
+          <button id="btnLogin" class="primary">Login</button>
+        </div>
+        <div style="flex:1">
+          <h4>Signup</h4>
+          <input id="su_user" placeholder="username" />
+          <input id="su_pass" placeholder="password" type="password" />
+          <button id="btnSignup">Create</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="dashboard" class="hidden">
+      <p class="small">Logged in as <strong id="who"></strong> — credits: <span id="credits"></span></p>
+      <div style="display:flex;gap:12px;margin-top:12px">
+        <button id="btnRefresh">Refresh</button>
+        <button id="btnLogout">Logout</button>
+      </div>
+
+      <h3 style="margin-top:16px">Recent logs</h3>
+      <div id="logs" style="max-height:300px;overflow:auto;background:rgba(0,0,0,0.4);padding:8px;border-radius:6px"></div>
+    </div>
+  </div>
+
+  <div class="right card" id="adminPanel" style="display:none;">
+    <h3>Admin Panel</h3>
+    <div id="adminUI">
+      <p class="small">Users</p>
+      <div style="max-height:420px;overflow:auto">
+        <table id="usersTable"><thead><tr><th>id</th><th>user</th><th>credits</th><th>role</th><th>ban</th><th>actions</th></tr></thead><tbody></tbody></table>
+      </div>
+      <h4 style="margin-top:10px">Logs</h4>
+      <div id="adminLogs" style="max-height:200px;overflow:auto;background:#020202;padding:8px;border-radius:6px"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* Matrix rain (lightweight) */
+(() => {
+  const c = document.getElementById('rain');
+  const ctx = c.getContext('2d');
+  function resize(){c.width=innerWidth;c.height=innerHeight}
+  addEventListener('resize', resize); resize();
+  const cols = Math.floor(c.width/14);
+  const y = Array(cols).fill(0);
+  function step(){
+    ctx.fillStyle='rgba(0,0,0,0.06)';
+    ctx.fillRect(0,0,c.width,c.height);
+    ctx.fillStyle='#00ff41';
+    ctx.font = '12px monospace';
+    for(let i=0;i<y.length;i++){
+      const char = String.fromCharCode(0x30A0 + Math.random()*96);
+      ctx.fillText(char, i*14, y[i]*14);
+      if(y[i]*14 > c.height && Math.random()>0.975) y[i]=0;
+      y[i] += 1;
+    }
+    requestAnimationFrame(step);
+  }
+  step();
+})();
+
+/* App logic */
+const api = (path, opts={}) => fetch('/api'+path, opts).then(r=>r.json ? r.json() : r.text()).catch(e=>({ok:false,error:e+''}));
+let token = localStorage.getItem('msdash_token') || null;
+function setToken(t){ token=t; if(t) localStorage.setItem('msdash_token', t); else localStorage.removeItem('msdash_token'); }
+function authFetch(path, opts={}) {
+  opts.headers = opts.headers || {};
+  opts.headers['Content-Type'] = 'application/json';
+  if(token) opts.headers['Authorization'] = 'Bearer '+token;
+  return fetch('/api'+path, opts).then(r => {
+    if(r.status === 401) { setToken(null); renderUI(); throw 'unauth'; }
+    return r.json();
+  });
+}
+
+async function renderUI(){
+  if(!token) {
+    document.getElementById('notlogged').classList.remove('hidden');
+    document.getElementById('dashboard').classList.add('hidden');
+    document.getElementById('adminPanel').style.display='none';
+    return;
+  }
+  try {
+    const me = await authFetch('/me');
+    if(!me.ok) { setToken(null); return renderUI(); }
+    const u = me.user;
+    document.getElementById('who').innerText = u.username;
+    document.getElementById('credits').innerText = u.credits;
+    document.getElementById('notlogged').classList.add('hidden');
+    document.getElementById('dashboard').classList.remove('hidden');
+    // logs
+    const logs = await authFetch('/me/logs');
+    if(logs.ok) {
+      const L = logs.logs || [];
+      document.getElementById('logs').innerHTML = L.map(l=>`<div class="small">[${l.ts}] ${l.action} ${l.meta?('- '+l.meta):''}</div>`).join('');
+    }
+    // admin?
+    if(u.role==='admin'){
+      document.getElementById('adminPanel').style.display='block';
+      loadAdmin();
+    } else {
+      document.getElementById('adminPanel').style.display='none';
+    }
+  } catch(e){ console.error(e); setToken(null); renderUI(); }
+}
+
+document.getElementById('btnLogin').addEventListener('click', async ()=>{
+  const user=document.getElementById('login_user').value.trim();
+  const pass=document.getElementById('login_pass').value;
+  const res = await api('/auth/login', { method:'POST', body: JSON.stringify({ username:user, password:pass }), headers:{'Content-Type':'application/json'} });
+  if(res.ok){ setToken(res.token); alert('Welcome '+res.user.username); renderUI(); } else alert('Login failed: '+(res.error||''));
+});
+document.getElementById('btnSignup').addEventListener('click', async ()=>{
+  const user=document.getElementById('su_user').value.trim();
+  const pass=document.getElementById('su_pass').value;
+  const res = await api('/auth/signup', { method:'POST', body: JSON.stringify({ username:user, password:pass }), headers:{'Content-Type':'application/json'} });
+  if(res.ok) alert('Created — please login'); else alert('Signup failed: '+(res.error||''));
+});
+document.getElementById('btnLogout').addEventListener('click', ()=>{ setToken(null); renderUI(); });
+document.getElementById('btnRefresh').addEventListener('click', renderUI);
+
+/* Admin functions */
+async function loadAdmin(){
+  const r = await authFetch('/admin/users');
+  if(!r.ok) return;
+  const tbody = document.querySelector('#usersTable tbody');
+  tbody.innerHTML = r.users.map(u=>{
+    return `<tr>
+      <td>${u.id}</td>
+      <td>${u.username}</td>
+      <td>${u.credits}</td>
+      <td>${u.role}</td>
+      <td>${u.banned? 'yes':'no'}</td>
+      <td class="admin-actions">
+        <button onclick="modCredit(${u.id}, 100)">+100</button>
+        <button onclick="modCredit(${u.id}, -100)">-100</button>
+        <button onclick="ban(${u.id})">${u.banned? 'Unban':'Ban'}</button>
+      </td>
+    </tr>`;
+  }).join('');
+  const logs = await authFetch('/admin/logs');
+  document.getElementById('adminLogs').innerHTML = (logs.logs||[]).slice(0,200).map(l=>`<div class="small">[${l.ts}] ${l.username||'system'} - ${l.action} ${l.meta||''}</div>`).join('');
+}
+window.modCredit = async (id, delta)=> {
+  await authFetch('/admin/add-credit', { method:'POST', body:JSON.stringify({ userId:id, delta }), headers:{'Content-Type':'application/json'}});
+  await loadAdmin(); renderUI();
+}
+window.ban = async (id)=>{
+  // toggle
+  const users = (await authFetch('/admin/users')).users;
+  const u = users.find(x=>x.id===id);
+  if(u.banned) await authFetch('/admin/unban-user',{ method:'POST', body: JSON.stringify({ userId:id }), headers:{'Content-Type':'application/json'} });
+  else await authFetch('/admin/ban-user',{ method:'POST', body: JSON.stringify({ userId:id }), headers:{'Content-Type':'application/json'} });
+  await loadAdmin(); renderUI();
+}
+
+/* Toggle theme (matrix green on black vs light) */
+document.getElementById('toggleTheme').addEventListener('click', () => {
+  if(document.body.style.background.includes('linear-gradient')) {
+    document.body.style.background = '#fff'; document.body.style.color = '#000';
+    document.querySelectorAll('.card').forEach(c=>c.style.background='rgba(255,255,255,0.85)');
+    document.getElementById('toggleTheme').innerText='Toggle Dark';
+  } else {
+    location.reload();
+  }
+});
+
+/* auto refresh */
+setInterval(()=>{ if(localStorage.getItem('msdash_token')) renderUI(); }, 10000);
+
+/* initial render */
+renderUI();
+</script>
+</body>
+</html>

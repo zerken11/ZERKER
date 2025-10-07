@@ -1,0 +1,15 @@
+version: '3.8'
+services:
+  sms-v2:
+    build: .
+    image: sms-activate-v2:latest
+    container_name: sms-activate-v2
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - SESSION_SECRET=dev-secret-change-me

@@ -1,24 +1,18 @@
-git add .github/workflows/fixer.yml
-git commit -m "Fixer: force commit VERSION.txt to main"
-git push origin main
-name: Codex Fixer
+name: Fixer
 
 on:
   push:
-    branches: [ main ]
-  workflow_dispatch:
-  schedule:
-    - cron: "0 2 * * *"
+    branches:
+      - main
+  pull_request:
 
 jobs:
-  fix:
+  lint-and-format:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -32,25 +26,5 @@ jobs:
         run: npx eslint . || true
 
       - name: Format code with Prettier
-        run: npx prettier --write . || true
-
-      - name: Create version tag and update VERSION.txt
-        run: |
-          count=$(git tag -l "codex-v*" | wc -l)
-          new=$((count + 1))
-          tag="codex-v$new"
-
-          echo "$tag" > VERSION.txt
-
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
-
-          git checkout main
-          git add VERSION.txt
-          git commit -m "Update VERSION.txt to $tag" || echo "No changes"
-          git tag -f "$tag"
-
-      - name: Push changes back to GitHub
-        run: |
-          git push origin main --tags
+        run: npx prettier --check . || true
 
