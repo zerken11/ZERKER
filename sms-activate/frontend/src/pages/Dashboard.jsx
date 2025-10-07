@@ -1,79 +1,84 @@
-import React, { useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import { getToken, removeToken, decodeToken, isTokenValid, getUsernameFromToken } from "../utils/auth";
+# (paste content, save Ctrl+O Enter, exit Ctrl+X)
+mkdir -p sms-activate/frontend/src/pages
 
-function api(path, opts = {}) {
-  const token = getToken();
-  return fetch(path, {
-    headers: Object.assign({ "Content-Type": "application/json", Authorization: token ? `Bearer ${token}` : "" }, opts.headers || {}),
-    ...opts,
-  }).then(async (r) => {
-    const text = await r.text();
-    try { return { ok: r.ok, json: JSON.parse(text), status: r.status }; } catch { return { ok: r.ok, text, status: r.status }; }
-  });
+cat > sms-activate/frontend/src/pages/Dashboard.jsx <<'JS'
+import React, { useEffect, useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+
+function decodeToken(token){
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    return JSON.parse(atob(parts[1]));
+  } catch { return null; }
 }
 
-export default function Dashboard() {
-  const [user, setUser] = useState(null);
-  const [history, setHistory] = useState([]);
+export default function Dashboard(){
   const nav = useNavigate();
+  const [info, setInfo] = useState(null);
+  const [countdown, setCountdown] = useState(null);
 
-  const logout = useCallback((reason) => {
-    removeToken();
-    if (reason) console.log("auto-logout:", reason);
-    nav("/login", { replace: true });
-  }, [nav]);
+  useEffect(()=> {
+    const token = localStorage.getItem('token');
+    if (!token) return nav('/login', { replace: true });
 
-  useEffect(() => {
-    const token = getToken();
-    if (!token) return logout("no token");
-    if (!isTokenValid(token)) return logout("expired");
+    const t = decodeToken(token);
+    if (!t) { localStorage.removeItem('token'); return nav('/login'); }
+    const expiryMs = (t.exp * 1000) - Date.now();
+    setCountdown(Math.max(0, Math.floor(expiryMs/1000)));
 
-    // auto-expire watch: check every 3s
-    const iv = setInterval(() => {
-      const t = getToken();
-      if (!t || !isTokenValid(t)) {
-        clearInterval(iv);
-        logout("expired");
-      }
-    }, 3000);
+    const iv = setInterval(()=> {
+      setCountdown(c => {
+        if (c <= 1) {
+          localStorage.removeItem('token');
+          nav('/login', { replace: true });
+          clearInterval(iv);
+          return 0;
+        }
+        return c - 1;
+      });
+    }, 1000);
 
-    // fetch user info & history
-    (async () => {
-      const username = getUsernameFromToken(token);
-      setUser(username);
-      const r = await api(`/api/users/${username}/history`);
-      if (r.ok) setHistory(r.json.purchases || []);
-    })();
+    // verify token against API
+    fetch('/api/verify', { headers: { Authorization: 'Bearer ' + token }})
+      .then(r => {
+        if (!r.ok) throw new Error('token invalid');
+        return r.json();
+      })
+      .then(j => setInfo(j))
+      .catch(()=> {
+        localStorage.removeItem('token');
+        nav('/login', { replace: true });
+      });
 
-    return () => clearInterval(iv);
-  }, [logout]);
+    return ()=> clearInterval(iv);
+  }, []);
+
+  function logout(){
+    const token = localStorage.getItem('token');
+    if (token) {
+      fetch('/api/logout', { method: 'POST', headers: { Authorization: 'Bearer ' + token }});
+    }
+    localStorage.removeItem('token');
+    nav('/login');
+  }
+
+  if (!info) return <div>Loading...</div>;
 
   return (
-    <div className="page">
-      <header style={{display:"flex",justifyContent:"space-between"}}>
-        <h2>Dashboard</h2>
-        <div>
-          <button onClick={() => { removeToken(); nav("/login"); }}>Logout</button>
-        </div>
-      </header>
-
-      <section>
-        <p>Signed in as: <strong>{user}</strong></p>
-        <h3>Purchase history</h3>
-        <ul>
-          {history.length===0 && <li>No purchases yet</li>}
-          {history.map((p, i) => (
-            <li key={i}>
-              {new Date((p.created_at||0)*1000).toLocaleString()} — {p.reason} — {p.amount}
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <section>
-        <p><a href="/admin">Admin panel</a> (admin only)</p>
-      </section>
+    <div style={{padding:20}}>
+      <h2>Dashboard — {info.username}</h2>
+      <div>Token expires in: <strong>{countdown}s</strong></div>
+      <div style={{marginTop:10}}>
+        <button onClick={logout}>Logout</button>
+        <Link to="/admin" style={{marginLeft:10}}>Admin</Link>
+      </div>
+      <div style={{marginTop:20}}>
+        <h3>Quick actions</h3>
+        <p>Use Admin for balances / bans / history.</p>
+      </div>
     </div>
   );
 }
+JS
+
