@@ -1,81 +1,58 @@
-import { useEffect, useState } from "react";
+import React, { useState } from "react";
+import { getToken } from "../utils/auth";
+
+const api = async (path, opts = {}) => {
+  const token = getToken();
+  const r = await fetch(path, Object.assign({
+    method: opts.method || "POST",
+    headers: { "Content-Type": "application/json", Authorization: token ? `Bearer ${token}` : "" },
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
+  }, opts.fetchOpts || {}));
+  const j = await r.json().catch(()=>null);
+  return { ok: r.ok, status: r.status, json: j };
+};
 
 export default function Admin() {
-  const [stats, setStats] = useState(null);
-  const [users, setUsers] = useState([]);
-  const [target, setTarget] = useState("");
+  const [username, setUsername] = useState("");
   const [amount, setAmount] = useState(0);
+  const [out, setOut] = useState("");
 
-  async function fetchStats() {
-    const token = localStorage.getItem("token");
-    const res = await fetch("/api/admin/stats", { headers: { Authorization: "Bearer " + token } });
-    if (!res.ok) return;
-    const j = await res.json();
-    setStats(j);
-    setUsers(j.users || []);
-  }
-
-  useEffect(() => { fetchStats(); }, []);
-
-  async function addBalance() {
-    const token = localStorage.getItem("token");
-    await fetch("/api/admin/add-balance", {
-      method: "POST",
-      headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
-      body: JSON.stringify({ username: target, amount: Number(amount) })
-    });
-    fetchStats();
-  }
-
-  async function removeBalance() {
-    const token = localStorage.getItem("token");
-    await fetch("/api/admin/remove-balance", {
-      method: "POST",
-      headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
-      body: JSON.stringify({ username: target, amount: Number(amount) })
-    });
-    fetchStats();
-  }
-
-  async function banUser(flag) {
-    const token = localStorage.getItem("token");
-    await fetch("/api/admin/ban", {
-      method: "POST",
-      headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
-      body: JSON.stringify({ username: target, ban: flag })
-    });
-    fetchStats();
+  async function doAction(action, body) {
+    setOut("...");
+    const r = await api(`/api/admin/${action}`, { body });
+    setOut(JSON.stringify(r.json) || `HTTP ${r.status}`);
   }
 
   return (
-    <div style={{ color: "lime", padding: 20 }}>
-      <h2>Admin Console</h2>
-      {stats && (
-        <div>
-          <p>Total users: {stats.totalUsers}</p>
-          <p>Total purchases: {stats.totalPurchases}</p>
-          <p>Total credit: {stats.totalCredit}</p>
-        </div>
-      )}
-      <hr />
-      <div>
-        <input placeholder="target username" value={target} onChange={(e)=>setTarget(e.target.value)} />
-        <input placeholder="amount" type="number" value={amount} onChange={(e)=>setAmount(e.target.value)} />
-        <button onClick={addBalance}>Add Balance</button>
-        <button onClick={removeBalance}>Remove Balance</button>
-        <button onClick={()=>banUser(true)}>Ban</button>
-        <button onClick={()=>banUser(false)}>Unban</button>
+    <div className="page">
+      <h2>Admin</h2>
+      <div className="card">
+        <h4>Add balance</h4>
+        <input placeholder="username" value={username} onChange={e=>setUsername(e.target.value)} />
+        <input type="number" value={amount} onChange={e=>setAmount(Number(e.target.value))} />
+        <button onClick={()=>doAction("add-balance", { username, amount })}>Add</button>
       </div>
-      <hr/>
-      <h3>Users</h3>
-      <table style={{ width: "100%", color: "lime" }}>
-        <thead><tr><th>Username</th><th>Role</th><th>Balance</th><th>Banned</th></tr></thead>
-        <tbody>
-          {users.map(u=>(
-            <tr key={u.username}><td>{u.username}</td><td>{u.role}</td><td>{u.balance}</td><td>{u.banned? "yes":"no"}</td></tr>
-          ))}
-        </tbody>
-      </table>
+
+      <div className="card">
+        <h4>Remove balance</h4>
+        <input placeholder="username" value={username} onChange={e=>setUsername(e.target.value)} />
+        <input type="number" value={amount} onChange={e=>setAmount(Number(e.target.value))} />
+        <button onClick={()=>doAction("remove-balance", { username, amount })}>Remove</button>
+      </div>
+
+      <div className="card">
+        <h4>Ban / Unban</h4>
+        <input placeholder="username" value={username} onChange={e=>setUsername(e.target.value)} />
+        <button onClick={()=>doAction("ban-user", { username })}>Ban</button>
+        <button onClick={()=>doAction("unban-user", { username })}>Unban</button>
+      </div>
+
+      <div className="card">
+        <h4>Stats</h4>
+        <button onClick={()=>doAction("stats", {})}>Get stats</button>
+      </div>
+
+      <pre style={{whiteSpace:"pre-wrap"}}>{out}</pre>
     </div>
   );
 }
